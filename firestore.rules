@@ -1,0 +1,54 @@
+// firestore.rules — paste this into your Firebase Console → Firestore → Rules
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper: user must be signed in
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    // Helper: request is from this user
+    function isUser(uid) {
+      return request.auth.uid == uid;
+    }
+
+    // Users: read your own profile, write your own profile
+    match /users/{userId} {
+      allow read:   if isAuth();
+      allow create: if isUser(userId);
+      allow update: if isUser(userId);
+    }
+
+    // Listings: anyone logged in can read; only the seller can update/delete
+    match /listings/{listingId} {
+      allow read:   if isAuth();
+      allow create: if isAuth() && request.resource.data.sellerId == request.auth.uid;
+      allow update, delete: if isUser(resource.data.sellerId);
+    }
+
+    // Interests: buyer creates; seller and buyer can read; seller can update status
+    match /interests/{interestId} {
+      allow read:   if isAuth() && (
+        resource.data.buyerId  == request.auth.uid ||
+        resource.data.sellerId == request.auth.uid
+      );
+      allow create: if isAuth() && request.resource.data.buyerId == request.auth.uid;
+      allow update: if isUser(resource.data.sellerId);
+    }
+
+    // Chats: only participants can read; only participants can write
+    match /chats/{chatId} {
+      allow read, update: if isAuth() && request.auth.uid in resource.data.participants;
+      allow create:       if isAuth() && request.auth.uid in request.resource.data.participants;
+
+      match /messages/{messageId} {
+        allow read:   if isAuth() && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
+        allow create: if isAuth()
+          && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants
+          && request.resource.data.senderId == request.auth.uid;
+      }
+    }
+  }
+}
