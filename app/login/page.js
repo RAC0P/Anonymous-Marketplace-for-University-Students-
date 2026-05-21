@@ -20,7 +20,8 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!loading && user) {
-     router.replace('/welcome'); 
+      // Send unverified users to the verification page instead of the app
+      router.replace(user.emailVerified ? '/welcome' : '/verify-email');
     }
   }, [user, loading, router]);
 
@@ -47,7 +48,11 @@ export default function LoginPage() {
           createdAt: serverTimestamp(),
         });
 
-        router.replace('/welcome');
+        // Store password briefly so verify-email page can re-authenticate
+        // if the user wants to discard this account. Cleared immediately after use.
+        sessionStorage.setItem('_cx_tmp_pw', password);
+
+        router.replace('/verify-email');
       } else {
         await login(email, password);
         router.replace('/welcome');
