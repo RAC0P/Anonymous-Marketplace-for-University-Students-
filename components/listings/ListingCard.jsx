@@ -21,44 +21,66 @@ const CONDITION_MAP = {
 export default function ListingCard({ listing, handleDelete }) {
   const cat       = CATEGORY_CONFIG[listing.category] || CATEGORY_CONFIG.other;
   const condition = CONDITION_MAP[listing.condition]  || CONDITION_MAP.good;
+  const firstImage = listing.imageUrls?.[0] || null;
 
   return (
     <Link href={`/marketplace/${listing.id}`} className="listing-card group" aria-label={listing.title}>
       {/* Visual header */}
       <div
-        className="relative flex items-end p-5"
+        className="relative flex items-end overflow-hidden"
         style={{
-          height:     '140px',
-          background: `linear-gradient(135deg, ${cat.bg}, var(--brand-surface))`,
+          height:       '140px',
+          background:   firstImage
+            ? 'var(--brand-surface)'
+            : `linear-gradient(135deg, ${cat.bg}, var(--brand-surface))`,
           borderBottom: '1px solid var(--brand-border)',
         }}
       >
-        {/* Condition badge — top right */}
+        {/* ── Photo (when available) ── */}
+        {firstImage ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={firstImage}
+            alt={listing.title}
+            style={{
+              position:   'absolute',
+              inset:      0,
+              width:      '100%',
+              height:     '100%',
+              objectFit:  'cover',
+              opacity:    0.85,
+            }}
+          />
+        ) : (
+          /* Big emoji fallback */
+          <span
+            className="text-5xl leading-none select-none p-5"
+            style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.4))' }}
+            aria-hidden="true"
+          >
+            {cat.emoji}
+          </span>
+        )}
+
+        {/* Condition badge — top right, always on top */}
         <span
           className={`badge ${condition.cls} absolute top-4 right-4`}
-          style={{ fontSize: '10px' }}
+          style={{ fontSize: '10px', zIndex: 1 }}
         >
           {condition.label}
         </span>
 
-        {/* Big emoji — bottom left */}
-        <span
-          className="text-5xl leading-none select-none"
-          style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.4))' }}
-          aria-hidden="true"
-        >
-          {cat.emoji}
-        </span>
-
-        {/* Accent glow dot */}
-        <span
-          className="absolute bottom-4 right-4 w-2 h-2 rounded-full"
-          style={{
-            background: cat.accent,
-            boxShadow:  `0 0 8px ${cat.accent}`,
-          }}
-          aria-hidden="true"
-        />
+        {/* Accent glow dot (only without a photo) */}
+        {!firstImage && (
+          <span
+            className="absolute bottom-4 right-4 w-2 h-2 rounded-full"
+            style={{
+              background: cat.accent,
+              boxShadow:  `0 0 8px ${cat.accent}`,
+            }}
+            aria-hidden="true"
+          />
+        )}
       </div>
 
       {/* Content */}
@@ -75,8 +97,8 @@ export default function ListingCard({ listing, handleDelete }) {
         <h3
           className="listing-title text-base font-semibold leading-snug clamp-2 transition-colors"
           style={{
-            fontFamily: 'var(--font-display)',
-            color:      '#f4f2ff',
+            fontFamily:    'var(--font-display)',
+            color:         '#f4f2ff',
             letterSpacing: '-0.01em',
           }}
         >
@@ -100,8 +122,8 @@ export default function ListingCard({ listing, handleDelete }) {
             <p
               className="text-xl font-bold"
               style={{
-                fontFamily: 'var(--font-display)',
-                color:      cat.accent,
+                fontFamily:    'var(--font-display)',
+                color:         cat.accent,
                 letterSpacing: '-0.02em',
               }}
             >
