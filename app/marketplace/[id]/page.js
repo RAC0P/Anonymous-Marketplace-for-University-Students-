@@ -32,7 +32,7 @@ export default function ListingDetailPage() {
       try {
         const snap = await getDoc(doc(db, 'listings', params.id));
         if (!snap.exists()) return;
-        
+       
         const data = { id: snap.id, ...snap.data() };
         setListing(data);
 
@@ -67,7 +67,11 @@ export default function ListingDetailPage() {
     }
   }
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="text-4xl">🦊</div></div>;
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-4xl">🦊</div>
+    </div>
+  );
 
   if (!listing) return (
     <AuthGuard>
@@ -82,17 +86,38 @@ export default function ListingDetailPage() {
       <div className="min-h-screen" style={{ background: 'var(--brand-paper)' }}>
         <Navbar />
 
-        <main className="max-w-3xl mx-auto px-5 py-10">
-          <Link href="/marketplace" className="inline-flex items-center gap-2 text-sm mb-8 text-[var(--brand-muted)] hover:text-black">
+        <main className="max-w-4xl mx-auto px-5 py-10">
+          <Link href="/marketplace" className="inline-flex items-center gap-2 text-sm mb-8 text-[var(--brand-muted)] hover:text-white">
             ← Back to Marketplace
           </Link>
 
           <div className="bg-white rounded-3xl border border-[var(--brand-border)] overflow-hidden card-hover">
+            
+            {/* Image Gallery */}
+            {listing.imageUrls && listing.imageUrls.length > 0 && (
+              <div className="p-6 bg-[var(--brand-surface)]">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {listing.imageUrls.map((url, index) => (
+                    <div key={index} className="rounded-2xl overflow-hidden border border-[var(--brand-border)]">
+                      <img 
+                        src={url} 
+                        alt={`${listing.title} - Photo ${index + 1}`}
+                        className="w-full h-auto object-cover aspect-video"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Header Info */}
             <div className="px-8 py-8 border-b border-[var(--brand-border)] bg-[var(--brand-surface)]">
               <div className="flex gap-3">
                 <span className="text-4xl">📦</span>
                 <div>
-                  <span className="badge px-4 py-1" style={{ background: condition.bg, color: condition.text }}>{condition.label}</span>
+                  <span className="badge px-4 py-1" style={{ background: condition.bg, color: condition.text }}>
+                    {condition.label}
+                  </span>
                   <span className="badge ml-2">{listing.category}</span>
                 </div>
               </div>
@@ -103,7 +128,9 @@ export default function ListingDetailPage() {
                 {listing.title}
               </h1>
 
-              <p className="mt-6 text-[var(--brand-muted)] leading-relaxed">{listing.description}</p>
+              <p className="mt-6 text-[var(--brand-muted)] leading-relaxed">
+                {listing.description}
+              </p>
 
               {seller && (
                 <div className="mt-8 p-5 rounded-2xl bg-[var(--brand-surface)] flex items-center gap-4">

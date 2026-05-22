@@ -4,20 +4,25 @@ import { useEffect, useState } from 'react';
 import { collection, onSnapshot, orderBy, query, where } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
-export function useListings(filters = {}) {
+export function useListings() {
   const [listings, setListings] = useState([]);
-  const [loading, setLoading]   = useState(true);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Only show active listings, newest first
     const q = query(
       collection(db, 'listings'),
       where('status', '==', 'active'),
       orderBy('createdAt', 'desc')
     );
 
-    const unsub = onSnapshot(q, snap => {
-      setListings(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    const unsub = onSnapshot(q, (snap) => {
+      const data = snap.docs.map(doc => {
+        const listing = { id: doc.id, ...doc.data() };
+        // Ensure imageUrls is always an array
+        if (!listing.imageUrls) listing.imageUrls = [];
+        return listing;
+      });
+      setListings(data);
       setLoading(false);
     });
 

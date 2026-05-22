@@ -23,8 +23,11 @@ export default function ListingCard({ listing, handleDelete }) {
   const condition = CONDITION_MAP[listing.condition]  || CONDITION_MAP.good;
   const firstImage = listing.imageUrls?.[0] || null;
 
+  const hasImage = listing.imageUrls && listing.imageUrls.length > 0;
+
   return (
     <Link href={`/marketplace/${listing.id}`} className="listing-card group" aria-label={listing.title}>
+<<<<<<< HEAD
       {/* Visual header */}
       <div
         className="relative flex items-end overflow-hidden"
@@ -81,18 +84,44 @@ export default function ListingCard({ listing, handleDelete }) {
             aria-hidden="true"
           />
         )}
+=======
+      
+      {/* Image Header */}
+      <div className="relative h-[170px] overflow-hidden bg-black">
+        {hasImage ? (
+          <img 
+            src={listing.imageUrls[0]} 
+            alt={listing.title}
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+        ) : (
+          <div 
+            className="flex items-end h-full p-6"
+            style={{ background: `linear-gradient(135deg, ${cat.bg}, var(--brand-surface))` }}
+          >
+            <span className="text-6xl leading-none select-none" style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.6))' }}>
+              {cat.emoji}
+            </span>
+          </div>
+        )}
+
+        {/* Condition Badge */}
+        <span
+          className={`badge ${condition.cls} absolute top-4 right-4 z-10`}
+          style={{ fontSize: '10px' }}
+        >
+          {condition.label}
+        </span>
+>>>>>>> 00e053d ("Updated")
       </div>
 
       {/* Content */}
       <div className="flex flex-col flex-1 p-5 gap-3">
-        {/* Category label */}
-        <span
-          className="section-label"
-          style={{ color: cat.accent }}
-        >
+        <span className="section-label" style={{ color: cat.accent }}>
           {listing.category}
         </span>
 
+<<<<<<< HEAD
         {/* Title */}
         <h3
           className="listing-title text-base font-semibold leading-snug clamp-2 transition-colors"
@@ -102,17 +131,18 @@ export default function ListingCard({ listing, handleDelete }) {
             letterSpacing: '-0.01em',
           }}
         >
+=======
+        <h3 className="listing-title text-base font-semibold leading-snug clamp-2" 
+            style={{ fontFamily: 'var(--font-display)', color: '#f4f2ff' }}>
+>>>>>>> 00e053d ("Updated")
           {listing.title}
         </h3>
 
-        {/* Description */}
-        <p
-          className="text-sm clamp-2 flex-1"
-          style={{ color: 'var(--brand-muted)', lineHeight: '1.5' }}
-        >
+        <p className="text-sm clamp-2 flex-1" style={{ color: 'var(--brand-muted)', lineHeight: '1.5' }}>
           {listing.description}
         </p>
 
+<<<<<<< HEAD
         {/* Footer */}
         <div
           className="flex items-center justify-between pt-3"
@@ -130,24 +160,21 @@ export default function ListingCard({ listing, handleDelete }) {
               ৳{listing.price?.toLocaleString()}
             </p>
           </div>
+=======
+        <div className="flex items-center justify-between pt-3 border-t border-[var(--brand-border)]">
+          <p className="text-xl font-bold" style={{ color: cat.accent }}>
+            ৳{listing.price?.toLocaleString()}
+          </p>
+>>>>>>> 00e053d ("Updated")
 
           <div className="flex items-center gap-2">
             {handleDelete && (
-              <button
-                onClick={e => { e.preventDefault(); e.stopPropagation(); handleDelete(listing.id); }}
-                className="btn-danger"
-                style={{ padding: '5px 12px', fontSize: '12px' }}
-                aria-label="Delete listing"
-              >
+              <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDelete(listing.id); }}
+                className="btn-danger text-xs px-3 py-1">
                 Delete
               </button>
             )}
-            <span
-              className="text-sm font-medium transition-colors"
-              style={{ color: 'var(--brand-muted)' }}
-            >
-              View →
-            </span>
+            <span className="text-sm font-medium" style={{ color: 'var(--brand-muted)' }}>View →</span>
           </div>
         </div>
       </div>
