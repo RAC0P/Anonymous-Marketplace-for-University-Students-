@@ -19,163 +19,40 @@ const CONDITION_MAP = {
 };
 
 export default function ListingCard({ listing, handleDelete }) {
-  const cat       = CATEGORY_CONFIG[listing.category] || CATEGORY_CONFIG.other;
-  const condition = CONDITION_MAP[listing.condition]  || CONDITION_MAP.good;
-  const firstImage = listing.imageUrls?.[0] || null;
-
-  const hasImage = listing.imageUrls && listing.imageUrls.length > 0;
+  const cat = CATEGORY_CONFIG[listing.category] || CATEGORY_CONFIG.other;
+  const condition = CONDITION_MAP[listing.condition] || CONDITION_MAP.good;
 
   return (
-    <Link href={`/marketplace/${listing.id}`} className="listing-card group" aria-label={listing.title}>
-<<<<<<< HEAD
-      {/* Visual header */}
-      <div
-        className="relative flex items-end overflow-hidden"
-        style={{
-          height:       '140px',
-          background:   firstImage
-            ? 'var(--brand-surface)'
-            : `linear-gradient(135deg, ${cat.bg}, var(--brand-surface))`,
-          borderBottom: '1px solid var(--brand-border)',
-        }}
-      >
-        {/* ── Photo (when available) ── */}
-        {firstImage ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={firstImage}
-            alt={listing.title}
-            style={{
-              position:   'absolute',
-              inset:      0,
-              width:      '100%',
-              height:     '100%',
-              objectFit:  'cover',
-              opacity:    0.85,
-            }}
-          />
-        ) : (
-          /* Big emoji fallback */
-          <span
-            className="text-5xl leading-none select-none p-5"
-            style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.4))' }}
-            aria-hidden="true"
-          >
-            {cat.emoji}
-          </span>
-        )}
-
-        {/* Condition badge — top right, always on top */}
-        <span
-          className={`badge ${condition.cls} absolute top-4 right-4`}
-          style={{ fontSize: '10px', zIndex: 1 }}
-        >
-          {condition.label}
-        </span>
-
-        {/* Accent glow dot (only without a photo) */}
-        {!firstImage && (
-          <span
-            className="absolute bottom-4 right-4 w-2 h-2 rounded-full"
-            style={{
-              background: cat.accent,
-              boxShadow:  `0 0 8px ${cat.accent}`,
-            }}
-            aria-hidden="true"
-          />
-        )}
-=======
-      
-      {/* Image Header */}
-      <div className="relative h-[170px] overflow-hidden bg-black">
-        {hasImage ? (
+    <Link href={`/marketplace/${listing.id}`} className="listing-card group">
+      <div className="relative h-[170px] overflow-hidden">
+        {listing.imageUrls?.[0] ? (
           <img 
             src={listing.imageUrls[0]} 
             alt={listing.title}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className="w-full h-full object-cover transition-transform group-hover:scale-105"
           />
         ) : (
-          <div 
-            className="flex items-end h-full p-6"
-            style={{ background: `linear-gradient(135deg, ${cat.bg}, var(--brand-surface))` }}
-          >
-            <span className="text-6xl leading-none select-none" style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.6))' }}>
-              {cat.emoji}
-            </span>
+          <div className="flex items-end h-full p-6" style={{ background: `linear-gradient(135deg, ${cat.bg}, var(--brand-surface))` }}>
+            <span className="text-6xl">{cat.emoji}</span>
           </div>
         )}
 
-        {/* Condition Badge */}
-        <span
-          className={`badge ${condition.cls} absolute top-4 right-4 z-10`}
-          style={{ fontSize: '10px' }}
-        >
+        <span className={`badge ${condition.cls} absolute top-4 right-4 z-10`}>
           {condition.label}
         </span>
->>>>>>> 00e053d ("Updated")
       </div>
 
-      {/* Content */}
-      <div className="flex flex-col flex-1 p-5 gap-3">
-        <span className="section-label" style={{ color: cat.accent }}>
-          {listing.category}
-        </span>
-
-<<<<<<< HEAD
-        {/* Title */}
-        <h3
-          className="listing-title text-base font-semibold leading-snug clamp-2 transition-colors"
-          style={{
-            fontFamily:    'var(--font-display)',
-            color:         '#f4f2ff',
-            letterSpacing: '-0.01em',
-          }}
-        >
-=======
-        <h3 className="listing-title text-base font-semibold leading-snug clamp-2" 
-            style={{ fontFamily: 'var(--font-display)', color: '#f4f2ff' }}>
->>>>>>> 00e053d ("Updated")
+      <div className="p-5 flex flex-col flex-1">
+        <span className="section-label" style={{ color: cat.accent }}>{listing.category}</span>
+        <h3 className="listing-title text-base font-semibold clamp-2" style={{ fontFamily: 'var(--font-display)' }}>
           {listing.title}
         </h3>
-
-        <p className="text-sm clamp-2 flex-1" style={{ color: 'var(--brand-muted)', lineHeight: '1.5' }}>
+        <p className="text-sm clamp-2 flex-1" style={{ color: 'var(--brand-muted)' }}>
           {listing.description}
         </p>
-
-<<<<<<< HEAD
-        {/* Footer */}
-        <div
-          className="flex items-center justify-between pt-3"
-          style={{ borderTop: '1px solid var(--brand-border)' }}
-        >
-          <div>
-            <p
-              className="text-xl font-bold"
-              style={{
-                fontFamily:    'var(--font-display)',
-                color:         cat.accent,
-                letterSpacing: '-0.02em',
-              }}
-            >
-              ৳{listing.price?.toLocaleString()}
-            </p>
-          </div>
-=======
-        <div className="flex items-center justify-between pt-3 border-t border-[var(--brand-border)]">
-          <p className="text-xl font-bold" style={{ color: cat.accent }}>
-            ৳{listing.price?.toLocaleString()}
-          </p>
->>>>>>> 00e053d ("Updated")
-
-          <div className="flex items-center gap-2">
-            {handleDelete && (
-              <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDelete(listing.id); }}
-                className="btn-danger text-xs px-3 py-1">
-                Delete
-              </button>
-            )}
-            <span className="text-sm font-medium" style={{ color: 'var(--brand-muted)' }}>View →</span>
-          </div>
+        <div className="flex justify-between items-center pt-3 border-t border-[var(--brand-border)]">
+          <p className="text-xl font-bold" style={{ color: cat.accent }}>৳{listing.price?.toLocaleString()}</p>
+          <span className="text-sm" style={{ color: 'var(--brand-muted)' }}>View →</span>
         </div>
       </div>
     </Link>
