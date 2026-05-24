@@ -1,5 +1,4 @@
 'use client';
-
 import Link from 'next/link';
 
 export default function WelcomePage() {
@@ -7,8 +6,15 @@ export default function WelcomePage() {
     <div className="min-h-screen bg-[var(--brand-paper)] flex items-center justify-center p-6">
       <div className="max-w-4xl text-center">
         <div className="mb-12">
-          <span className="text-7xl mb-6 block">🦊</span>
-          <h1 className="text-6xl md:text-7xl font-black tracking-tighter mb-6" style={{ fontFamily: 'var(--font-display)' }}>
+          {/* Big Modern CX Logo */}
+          <div className="flex justify-center mb-8">
+            <div className="w-32 h-32 bg-gradient-to-br from-violet-600 via-fuchsia-500 to-pink-500 rounded-3xl flex items-center justify-center shadow-2xl shadow-violet-500/40">
+              <span className="text-white font-black text-7xl tracking-[-0.08em]">CX</span>
+            </div>
+          </div>
+
+          <h1 className="text-6xl md:text-7xl font-black tracking-tighter mb-6" 
+              style={{ fontFamily: 'var(--font-display)', color: '#f4f2ff' }}>
             Campus<span className="text-[var(--brand-accent)]">X</span>change
           </h1>
           <p className="text-2xl text-[var(--brand-muted)]">Anonymous Campus Marketplace</p>

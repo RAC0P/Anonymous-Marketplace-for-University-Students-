@@ -29,7 +29,8 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
 
-    if (!acceptedDisclaimer) {
+    // Only require disclaimer for signup
+    if (isSignup && !acceptedDisclaimer) {
       setError("You must accept the disclaimer to create an account.");
       return;
     }
@@ -76,7 +77,6 @@ export default function LoginPage() {
             Campus<span style={{ color: 'var(--brand-accent)' }}>X</span>change
           </span>
         </div>
-
         <div className="space-y-6">
           <h1 className="text-6xl font-black leading-none tracking-tighter text-white" style={{ fontFamily: 'var(--font-display)' }}>
             Anonymous Campus Marketplace
@@ -117,7 +117,7 @@ export default function LoginPage() {
               />
             </div>
 
-            {/* Disclaimer Checkbox */}
+            {/* Disclaimer - Only for Signup */}
             {isSignup && (
               <div className="bg-[var(--brand-surface)] border border-[var(--brand-border)] rounded-2xl p-5 text-sm">
                 <label className="flex items-start gap-3 cursor-pointer">
@@ -129,7 +129,7 @@ export default function LoginPage() {
                   />
                   <span className="text-[var(--brand-muted)] leading-relaxed">
                     I understand that my email may be visible to admins for moderation purposes. 
-                    Although the platform is anonymous, <strong>illegal items, inappropriate content, 
+                    Although the platform is anonymous, <strong>illegal items, inappropriate content,
                     or prohibited trading is strictly forbidden</strong>. I agree to follow the rules.
                   </span>
                 </label>
@@ -147,19 +147,23 @@ export default function LoginPage() {
               disabled={submitting || (isSignup && !acceptedDisclaimer)}
               className="w-full py-4 text-lg font-semibold rounded-2xl btn-primary disabled:opacity-50"
             >
-              {submitting 
-                ? (isSignup ? 'Creating Account...' : 'Signing In...') 
+              {submitting
+                ? (isSignup ? 'Creating Account...' : 'Signing In...')
                 : (isSignup ? 'Create Account' : 'Sign In')}
             </button>
           </form>
 
           <div className="mt-6 text-center">
             <button
-              onClick={() => { setIsSignup(!isSignup); setError(''); setAcceptedDisclaimer(false); }}
+              onClick={() => { 
+                setIsSignup(!isSignup); 
+                setError(''); 
+                setAcceptedDisclaimer(false); 
+              }}
               className="text-[var(--brand-accent)] hover:underline"
             >
-              {isSignup 
-                ? 'Already have an account? Sign in' 
+              {isSignup
+                ? 'Already have an account? Sign in'
                 : "Don't have an account? Sign up"}
             </button>
           </div>
