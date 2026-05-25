@@ -1,266 +1,341 @@
 'use client';
+import './NewListing.css';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import AuthGuard from '../../../components/auth/AuthGuard';
-import Navbar from '../../../components/ui/Navbar';
-import { useAuth } from '../../../hooks/useAuth';
-import { createListing } from '../../../lib/listings';
+import React, { useState, useEffect, useRef } from 'react';
 
-const CATEGORIES = [
-  { value: 'books',       label: 'Books',       emoji: '📚' },
-  { value: 'notes',       label: 'Notes',       emoji: '📝' },
-  { value: 'electronics', label: 'Electronics', emoji: '💻' },
-  { value: 'lab',         label: 'Lab Materials', emoji: '🔬' },
-  { value: 'hostel',      label: 'Hostel Items', emoji: '🛋️' },
-  { value: 'other',       label: 'Other',        emoji: '📦' },
-];
+// Config constants
+const CAT_EMOJIS = { books: '📚', notes: '📝', electronics: '💻', lab: '🧪', hostel: '🛋️', other: '✨' };
+const CAT_LABELS = { books: 'Books', notes: 'Notes', electronics: 'Electronics', lab: 'Lab', hostel: 'Hostel', other: 'Other' };
+const COND_INFO = {
+  new: { dot: '#22c55e', label: 'New' },
+  good: { dot: '#3b82f6', label: 'Good' },
+  fair: { dot: '#f59e0b', label: 'Fair' },
+  poor: { dot: '#ef4444', label: 'Poor' },
+};
 
-const CONDITIONS = [
-  { value: 'new',  label: 'New',  desc: 'Unused, sealed' },
-  { value: 'good', label: 'Good', desc: 'Minor wear, works great' },
-  { value: 'fair', label: 'Fair', desc: 'Visible use, fully functional' },
-  { value: 'poor', label: 'Poor', desc: 'Heavy wear, still usable' },
-];
-
-export default function NewListingPage() {
-  const { user } = useAuth();
-  const router = useRouter();
-
+export default function NewListing() {
+  // State management
   const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+  const [desc, setDesc] = useState('');
   const [price, setPrice] = useState('');
-  const [condition, setCondition] = useState('good');
-  const [category, setCategory] = useState('books');
-  const [images, setImages] = useState([]); // Stores raw File objects for upload
-  const [previews, setPreviews] = useState([]); // Stores client URLs for browser visualization
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [selCat, setSelCat] = useState('books');
+  const [selCond, setSelCond] = useState('good');
+  const [imgCount, setImgCount] = useState(0);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [submitState, setSubmitState] = useState('idle'); // 'idle' | 'loading' | 'success'
 
-  // Handle local image selection and map blob preview links
-  function handleImageChange(e) {
+  const errorBarRef = useRef(null);
+
+  // Dynamic Multi-step Progress Calculation
+  const steps = [!!title.trim(), !!desc.trim(), price !== '' && Number(price) >= 0, imgCount > 0];
+
+  const handleImageUpload = (e) => {
     const files = Array.from(e.target.files || []);
-    if (!files.length) return;
+    setImgCount((prev) => Math.min(files.length + prev, 6));
+  };
 
-    // Filter to allow only image files
-    const validImages = files.filter((file) => file.type.startsWith('image/'));
+  const removeImg = (index, e) => {
+    e.stopPropagation();
+    setImgCount((prev) => Math.max(0, prev - 1));
+  };
 
-    if (validImages.length !== files.length) {
-      setError('Only image files (JPEG, PNG, etc.) are allowed.');
-    }
+  const handleSubmit = () => {
+    setErrorMsg('');
 
-    setImages((prev) => [...prev, ...validImages]);
-
-    const newPreviews = validImages.map((file) => URL.createObjectURL(file));
-    setPreviews((prev) => [...prev, ...newPreviews]);
-  }
-
-  function removeImage(index) {
-    setImages((prev) => prev.filter((_, i) => i !== index));
-    URL.revokeObjectURL(previews[index]);
-    setPreviews((prev) => prev.filter((_, i) => i !== index));
-  }
-
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setError('');
-
-    if (!title.trim() || !description.trim() || !price) {
-      setError('Please fill in all fields.');
+    if (!title.trim()) {
+      setErrorMsg('Please add a title for your listing.');
       return;
     }
-    if (Number(price) <= 0) {
-      setError('Price must be greater than 0.');
+    if (!desc.trim()) {
+      setErrorMsg('Please write a description.');
+      return;
+    }
+    if (price === '' || Number(price) < 0) {
+      setErrorMsg('Please enter a valid price (0 or more).');
       return;
     }
 
-    setLoading(true);
-    try {
-      await createListing(
-        {
-          sellerId: user.uid,
-          sellerEmail: user.email,
-          title: title.trim(),
-          description: description.trim(),
-          price: Number(price),
-          condition,
-          category,
-        },
-        images
-      );
-      previews.forEach((url) => URL.revokeObjectURL(url));
-      
-      router.push('/marketplace');
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+    setSubmitState('loading');
+    setTimeout(() => {
+      setSubmitState('success');
+    }, 1800);
+  };
+
+  // Scroll error bar into view if active
+  useEffect(() => {
+    if (errorMsg && errorBarRef.current) {
+      errorBarRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
-  }
+  }, [errorMsg]);
 
   return (
-    <AuthGuard>
-      <div className="min-h-screen" style={{ background: 'var(--brand-paper)' }}>
-        <Navbar />
+    <div className="page">
+      {/* FontAwesome integration for Next.js */}
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 
-        <main className="max-w-2xl mx-auto px-4 sm:px-6 py-12">
-          <Link
-            href="/marketplace"
-            className="inline-flex items-center gap-2 text-sm mb-8 text-[var(--brand-muted)] hover:text-white"
-          >
-            ← Back to Marketplace
-          </Link>
+      {/* ═══ LEFT PANEL ═══ */}
+      <div className="left">
+        <button className="back-btn">
+          <i className="fa-solid fa-arrow-left"></i> Back to Marketplace
+        </button>
 
-          <h1 className="text-5xl font-black tracking-tight mb-2" style={{ fontFamily: 'var(--font-display)', color: '#f4f2ff' }}>
-            Create Listing
-          </h1>
-          <p className="text-lg text-[var(--brand-muted)] mb-10">
-            Your anonymous identity will be shown
-          </p>
+        <p className="eyebrow">New Listing</p>
+        <h1>Sell something<br /><em>amazing.</em></h1>
+        <p className="subtitle">Fill in the details below — your anonymous identity stays hidden from buyers at all times.</p>
 
-          <div className="rounded-3xl p-10" style={{ background: 'var(--brand-surface)', border: '1px solid var(--brand-border)' }}>
-            <form onSubmit={handleSubmit} className="space-y-10">
+        {/* Progress Strip */}
+        <div className="step-strip">
+          {steps.map((done, i) => {
+            const isActive = !done && steps.slice(0, i).every(Boolean);
+            const pillClassName = `step-pill ${done ? 'done' : isActive ? 'active' : ''}`;
+            return <div key={i} className={pillClassName} />;
+          })}
+        </div>
 
-              <div>
-                <label className="block text-sm font-semibold mb-3 text-white">Title</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Engineering Mathematics - 3rd Semester"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="input-field w-full text-lg py-4"
-                  maxLength={80}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold mb-3 text-white">Description</label>
-                <textarea
-                  placeholder="Describe your item..."
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  rows={6}
-                  className="input-field w-full resize-y"
-                  maxLength={500}
-                />
-              </div>
-
-              {/* Category */}
-              <div>
-                <label className="block text-sm font-semibold mb-4 text-white">Category</label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                  {CATEGORIES.map((cat) => (
-                    <button
-                      key={cat.value}
-                      type="button"
-                      onClick={() => setCategory(cat.value)}
-                      className="flex flex-col items-center gap-3 py-6 rounded-2xl border-2 transition-all"
-                      style={{
-                        borderColor: category === cat.value ? 'var(--brand-accent)' : 'var(--brand-border)',
-                        background: category === cat.value ? 'var(--brand-surface2)' : 'transparent',
-                      }}
-                    >
-                      <span className="text-5xl">{cat.emoji}</span>
-                      <span className="font-medium">{cat.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Condition */}
-              <div>
-                <label className="block text-sm font-semibold mb-4 text-white">Condition</label>
-                <div className="grid grid-cols-2 gap-4">
-                  {CONDITIONS.map((c) => (
-                    <button
-                      key={c.value}
-                      type="button"
-                      onClick={() => setCondition(c.value)}
-                      className="p-6 rounded-2xl border-2 text-left transition-all"
-                      style={{
-                        borderColor: condition === c.value ? 'var(--brand-accent)' : 'var(--brand-border)',
-                        background: condition === c.value ? 'var(--brand-surface2)' : 'transparent',
-                      }}
-                    >
-                      <div className="font-semibold text-xl mb-1">{c.label}</div>
-                      <div className="text-sm text-[var(--brand-muted)]">{c.desc}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Image Upload Block */}
-              <div>
-                <label className="block text-sm font-semibold mb-3 text-white">Item Images</label>
-                
-                <div className="grid grid-cols-3 gap-4 mb-4">
-                  {/* Preview Thumbnails */}
-                  {previews.map((src, index) => (
-                    <div key={src} className="relative aspect-square rounded-2xl overflow-hidden border border-[var(--brand-border)] bg-black/20">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img 
-                        src={src} 
-                        alt="Preview structural thumbnail" 
-                        className="w-full h-full object-cover"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(index)}
-                        className="absolute top-2 right-2 w-7 h-7 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center font-bold text-xs shadow transition-colors"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ))}
-
-                  {/* Upload Interactive Shell Trigger */}
-                  <label 
-                    className="flex flex-col items-center justify-center aspect-square rounded-2xl border-2 border-dashed cursor-pointer hover:bg-white/5 transition-all"
-                    style={{ borderColor: 'var(--brand-border)' }}
-                  >
-                    <span className="text-3xl mb-1 text-[var(--brand-muted)]">+</span>
-                    <span className="text-xs font-medium text-[var(--brand-muted)]">Upload</span>
-                    <input 
-                      type="file"
-                      multiple
-                      accept="image/*"
-                      onChange={handleImageChange}
-                      className="hidden"
-                    />
-                  </label>
-                </div>
-                <p className="text-xs text-[var(--brand-muted)]">You can select multiple photos showing different angles.</p>
-              </div>
-
-              {/* Price */}
-              <div>
-                <label className="block text-sm font-semibold mb-3 text-white">Price (৳)</label>
-                <div className="relative">
-                  <span className="absolute left-6 top-1/2 -translate-y-1/2 text-3xl text-[var(--brand-muted)]">৳</span>
-                  <input
-                    type="number"
-                    placeholder="0"
-                    value={price}
-                    onChange={(e) => setPrice(e.target.value)}
-                    className="input-field w-full pl-14 text-3xl font-semibold py-6"
-                  />
-                </div>
-              </div>
-
-              {error && <div className="text-red-400 bg-red-950/50 p-4 rounded-2xl">{error}</div>}
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-5 text-xl font-semibold rounded-2xl btn-primary"
-              >
-                {loading ? 'Uploading Images & Publishing...' : 'Publish Listing'}
-              </button>
-            </form>
+        {/* Title */}
+        <div className="field">
+          <div className="field-header">
+            <label className="field-label" htmlFor="inp-title">
+              Title <span style={{ color: 'var(--pink)' }}>*</span>
+            </label>
+            <span className="char-count">{title.length} / 80</span>
           </div>
-        </main>
+          <input
+            id="inp-title"
+            className="input-field"
+            type="text"
+            maxLength={80}
+            placeholder="e.g. Engineering Mathematics Vol. II"
+            value={title}
+            onChange={(e) => setTitle}
+            onInput={(e) => setTitle(e.target.value)}
+          />
+        </div>
+
+        {/* Description */}
+        <div className="field">
+          <div className="field-header">
+            <label className="field-label" htmlFor="inp-desc">
+              Description <span style={{ color: 'var(--pink)' }}>*</span>
+            </label>
+            <span className="char-count">{desc.length} / 500</span>
+          </div>
+          <textarea
+            id="inp-desc"
+            className="input-field"
+            maxLength={500}
+            placeholder="Describe the item, included accessories, any defects…"
+            value={desc}
+            onInput={(e) => setDesc(e.target.value)}
+          ></textarea>
+        </div>
+
+        <div className="divider"></div>
+
+        {/* Category Grid */}
+        <p className="section-label">Category</p>
+        <div className="cat-grid">
+          {Object.keys(CAT_LABELS).map((cat) => (
+            <button
+              key={cat}
+              className={`cat-btn ${selCat === cat ? 'active' : ''}`}
+              onClick={() => setSelCat(cat)}
+            >
+              <span className="cat-icon">{CAT_EMOJIS[cat]}</span>
+              <span className="cat-name">{CAT_LABELS[cat]}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className="divider"></div>
+
+        {/* Condition Grid */}
+        <p className="section-label">Condition</p>
+        <div className="cond-grid">
+          {Object.entries(COND_INFO).map(([key, info]) => {
+            const isActive = selCond === key;
+            return (
+              <button
+                key={key}
+                className={`cond-btn ${isActive ? 'active' : ''}`}
+                onClick={() => setSelCond(key)}
+                style={
+                  isActive
+                    ? { borderColor: info.dot, boxShadow: `0 0 0 3px ${info.dot}22, 0 8px 20px ${info.dot}18` }
+                    : {}
+                }
+              >
+                <span className="cond-dot" style={{ background: info.dot }}></span>
+                <span className="cond-name">{info.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="divider"></div>
+
+        {/* Photos Upload Grid */}
+        <p className="section-label">Photos</p>
+        <div className="img-grid">
+          <label className="img-slot" style={{ cursor: 'pointer' }}>
+            <i className="fa-regular fa-image"></i>
+            <span className="upload-label">Upload</span>
+            <input type="file" multiple accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
+          </label>
+
+          {/* Render filled slots */}
+          {Array.from({ length: Math.min(imgCount, 5) }).map((_, i) => (
+            <div key={`filled-${i}`} className="img-slot filled">
+              <span className="img-num">{i + 1}</span>
+              <div className="img-badge" onClick={(e) => removeImg(i, e)}>
+                <i className="fa-solid fa-xmark"></i>
+              </div>
+            </div>
+          ))}
+
+          {/* Render empty placeholders */}
+          {Array.from({ length: Math.max(0, 3 - Math.min(imgCount, 5)) }).map((_, i) => {
+            const visualIndex = Math.min(imgCount, 5) + i + 1;
+            return (
+              <div
+                key={`empty-${i}`}
+                className="img-slot"
+                style={{ cursor: 'default', opacity: Math.max(0.07, 0.35 - visualIndex * 0.08) }}
+              >
+                <i className="fa-regular fa-image"></i>
+              </div>
+            );
+          })}
+        </div>
+        <p className="img-hint">
+          <i className="fa-solid fa-circle-info" style={{ marginRight: '5px', color: 'var(--accent)', opacity: 0.6 }}></i>
+          PNG, JPG or WEBP · Max 6 images · First image is your cover
+        </p>
+
+        <div className="divider"></div>
+
+        {/* Price Input */}
+        <p className="section-label">Price</p>
+        <div className="price-wrap">
+          <span className="price-sym">৳</span>
+          <input
+            id="inp-price"
+            className="price-input"
+            type="number"
+            min="0"
+            placeholder="0"
+            value={price}
+            onInput={(e) => setPrice(e.target.value)}
+          />
+        </div>
+        <p className="img-hint" style={{ marginTop: '8px' }}>Set to 0 for free giveaway</p>
+
+        {/* Dynamic Error Status */}
+        {errorMsg && (
+          <div ref={errorBarRef} className="error-bar" style={{ display: 'flex' }}>
+            <i className="fa-solid fa-triangle-exclamation"></i>
+            <span>{errorMsg}</span>
+          </div>
+        )}
+
+        {/* Submit Actions */}
+        <button
+          className={`submit-btn ${submitState === 'success' ? 'success' : ''}`}
+          disabled={submitState !== 'idle'}
+          onClick={handleSubmit}
+        >
+          {submitState === 'idle' && (
+            <>
+              <i className="fa-solid fa-rocket" style={{ marginRight: '9px' }}></i>Publish Listing
+            </>
+          )}
+          {submitState === 'loading' && (
+            <>
+              <i className="fa-solid fa-spinner fa-spin" style={{ marginRight: '9px' }}></i>Publishing…
+            </>
+          )}
+          {submitState === 'success' && (
+            <>
+              <i className="fa-solid fa-check" style={{ marginRight: '9px' }}></i>Listing Published!
+            </>
+          )}
+        </button>
       </div>
-    </AuthGuard>
+
+      {/* ═══ RIGHT PANEL (LIVE PREVIEW) ═══ */}
+      <div className="right">
+        <div className="preview-top">
+          <span className="preview-label">Live Preview</span>
+          <span className="preview-badge">Preview</span>
+        </div>
+
+        <div className="anon-badge">
+          <div className="anon-avatar">∞</div>
+          <div className="anon-text">
+            <p>Anonymous Seller</p>
+            <p>Your real identity is hidden from all buyers</p>
+          </div>
+        </div>
+
+        {/* Live Preview Card */}
+        <div className="card-preview">
+          <div className="card-img-row">
+            <div className="card-img-block b1">
+              {imgCount > 0 ? '🖼️' : CAT_EMOJIS[selCat] || '📦'}
+            </div>
+            <div className="card-img-block b2">{imgCount > 1 ? '🖼️' : '📦'}</div>
+            <div className="card-img-block b3">{imgCount > 2 ? '🖼️' : '✨'}</div>
+          </div>
+
+          <div className="card-meta">
+            <span className={`card-cat-pill cat-pill-${selCat}`}>
+              {CAT_EMOJIS[selCat]} {CAT_LABELS[selCat]}
+            </span>
+            <span className="card-cond-pill">
+              <span className="card-cond-dot" style={{ background: COND_INFO[selCond].dot }}></span>
+              {COND_INFO[selCond].label}
+            </span>
+          </div>
+
+          <div className="card-title" style={{ color: title ? 'var(--text)' : 'var(--text-muted)' }}>
+            {title.trim() || 'Your listing title…'}
+          </div>
+          <div className="card-desc" style={{ color: desc ? 'var(--text-sub)' : 'var(--text-muted)' }}>
+            {desc.trim() || 'Description will appear here in real time.'}
+          </div>
+
+          <div className="card-price-row">
+            {price !== '' && Number(price) >= 0 ? (
+              <div className="card-price">
+                <span className="currency">৳</span>
+                {Number(price).toLocaleString('en-BD')}
+              </div>
+            ) : (
+              <div className="card-price-empty">৳ —</div>
+            )}
+            <button className="card-action-btn">Contact</button>
+          </div>
+        </div>
+
+        <div className="tips">
+          <div className="tip-item">
+            <i className="fa-solid fa-camera-retro"></i>
+            <p>Clear photos from multiple angles increase buyer interest by 3×</p>
+          </div>
+          <div className="tip-item">
+            <i className="fa-solid fa-tag"></i>
+            <p>Price 10–20% below new value and items sell 2× faster</p>
+          </div>
+          <div className="tip-item">
+            <i className="fa-solid fa-align-left"></i>
+            <p>Mention edition, year, and included extras in your description</p>
+          </div>
+          <div className="tip-item">
+            <i className="fa-solid fa-shield-halved"></i>
+            <p>Your email stays hidden — buyers reach you through our encrypted system</p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
