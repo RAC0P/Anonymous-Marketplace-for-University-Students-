@@ -161,12 +161,6 @@ The goal is to eventually evolve into a fully university-integrated marketplace 
 
 ---
 
-# 🌐 Project Repository
-
-## 🔗 GitHub Repository
-:contentReference[oaicite:0]{index=0}
-
----
 
 # 🤝 Contributing
 
