@@ -9,7 +9,6 @@ import {
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../hooks/useAuth';
 
-// ─── tiny helpers ───────────────────────────────────────────────────────────
 const fmt = (n) => Number(n || 0).toLocaleString();
 const timeAgo = (ts) => {
   if (!ts) return '—';
@@ -21,8 +20,6 @@ const timeAgo = (ts) => {
 };
 
 const SECTIONS = ['Overview', 'Listings', 'Users', 'Interests'];
-
-// ─── stat card ──────────────────────────────────────────────────────────────
 function StatCard({ label, value, icon, accent, sub }) {
   return (
     <div style={{
@@ -46,7 +43,6 @@ function StatCard({ label, value, icon, accent, sub }) {
   );
 }
 
-// ─── section header ──────────────────────────────────────────────────────────
 function SectionHeader({ title, count, action }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
@@ -58,7 +54,6 @@ function SectionHeader({ title, count, action }) {
   );
 }
 
-// ─── main component ──────────────────────────────────────────────────────────
 export default function AdminPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -79,7 +74,7 @@ export default function AdminPage() {
   const [toast, setToast] = useState(null);
   const [confirmModal, setConfirmModal] = useState(null);   // { message, onConfirm }
 
-  // ── admin check ──────────────────────────────────────────────────────────
+
   useEffect(() => {
     if (loading) return;
     if (!user) { router.replace('/login'); return; }
@@ -94,7 +89,6 @@ export default function AdminPage() {
       .finally(() => setChecking(false));
   }, [user, loading, router]);
 
-  // ── data load ─────────────────────────────────────────────────────────────
   const loadData = useCallback(async () => {
     setDataLoading(true);
     try {
@@ -108,7 +102,6 @@ export default function AdminPage() {
       const listingsData = listingsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
       const interestsData = interestsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-      // enrich interests with listing title + buyer/seller names
       const userMap = Object.fromEntries(usersData.map(u => [u.id, u]));
       const listingMap = Object.fromEntries(listingsData.map(l => [l.id, l]));
       const enrichedInterests = interestsData.map(i => ({
@@ -138,8 +131,6 @@ export default function AdminPage() {
   useEffect(() => {
     if (isAdmin) loadData();
   }, [isAdmin, loadData]);
-
-  // ── helpers ───────────────────────────────────────────────────────────────
   const showToast = (msg, type = 'success') => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3000);
@@ -147,7 +138,6 @@ export default function AdminPage() {
 
   const confirm = (message, onConfirm) => setConfirmModal({ message, onConfirm });
 
-  // ── admin actions ─────────────────────────────────────────────────────────
   async function adminDeleteListing(id) {
     confirm('Permanently delete this listing? This cannot be undone.', async () => {
       try {
@@ -180,16 +170,32 @@ export default function AdminPage() {
   }
 
   async function adminDeleteUser(uid) {
-    confirm('Delete this user document? (Auth account stays; use Firebase Console to delete auth.)', async () => {
+    confirm('This will delete the user\'s Firestore data and all their listings. The Firebase Auth account must be removed separately via Firebase Console.', async () => {
       try {
+   
+        const listingsQ = query(collection(db, 'listings'), where('sellerId', '==', uid));
+        const listingsSnap = await getDocs(listingsQ);
+        await Promise.all(listingsSnap.docs.map(d => deleteDoc(d.ref)));
+
+        const interestsQ = query(collection(db, 'interests'), where('buyerId', '==', uid));
+        const interestsSnap = await getDocs(interestsQ);
+        await Promise.all(interestsSnap.docs.map(d => deleteDoc(d.ref)));
+
+       
+        const sellerInterestsQ = query(collection(db, 'interests'), where('sellerId', '==', uid));
+        const sellerInterestsSnap = await getDocs(sellerInterestsQ);
+        await Promise.all(sellerInterestsSnap.docs.map(d => deleteDoc(d.ref)));
+
         await deleteDoc(doc(db, 'users', uid));
-        showToast('User removed');
+
+        showToast('User data deleted. Remove Auth account in Firebase Console.');
         loadData();
-      } catch { showToast('Failed', 'error'); }
+      } catch (err) {
+        console.error('adminDeleteUser error:', err);
+        showToast('Failed to delete user data', 'error');
+      }
     });
   }
-
-  // ── filtered data ─────────────────────────────────────────────────────────
   const filteredListings = listings.filter(l => {
     if (listingFilter === 'active') return l.status === 'active' && !l.isDeleted;
     if (listingFilter === 'deleted') return l.isDeleted || l.status === 'deleted';
@@ -202,7 +208,6 @@ export default function AdminPage() {
     u.email?.toLowerCase().includes(userSearch.toLowerCase())
   );
 
-  // ── loading / guard ───────────────────────────────────────────────────────
   if (loading || checking) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0a0914', color: '#fff' }}>
@@ -215,8 +220,6 @@ export default function AdminPage() {
   }
 
   if (!isAdmin) return null;
-
-  // ── styles ────────────────────────────────────────────────────────────────
   const s = {
     page: { minHeight: '100vh', background: '#0a0914', color: '#fff', display: 'flex' },
     sidebar: {
@@ -277,7 +280,6 @@ export default function AdminPage() {
 
   const NAV_ICONS = { Overview: '📊', Listings: '🏷️', Users: '👥', Interests: '💬' };
 
-  // ── render ────────────────────────────────────────────────────────────────
   return (
     <div style={s.page}>
       {/* Toast */}
@@ -495,7 +497,7 @@ export default function AdminPage() {
                               <button style={s.actionBtn(u.isAdmin ? '#f59e0b' : '#a78bfa')} onClick={() => adminToggleAdmin(u.id, u.isAdmin)}>
                                 {u.isAdmin ? 'Revoke Admin' : 'Make Admin'}
                               </button>
-                              <button style={s.actionBtn('#f87171')} onClick={() => adminDeleteUser(u.id)}>Remove</button>
+                              <button style={{...s.actionBtn('#f87171'), fontSize:'11px'}} onClick={() => adminDeleteUser(u.id)} title="Deletes Firestore data only. Remove Auth account in Firebase Console.">Delete data ⚠</button>
                             </>
                           )}
                           {u.id === user.uid && <span style={{ color: '#6b7280', fontSize: '12px' }}>You</span>}
