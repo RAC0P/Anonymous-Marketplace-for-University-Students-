@@ -2,7 +2,7 @@
 
 # <div align="center">
 
-# 🦊 CampusXchange
+# CampusXchange
 
 **Anonymous Campus Marketplace**
 
