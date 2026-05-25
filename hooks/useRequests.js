@@ -10,9 +10,6 @@ export function useRequests(userId) {
 
   useEffect(() => {
     if (!userId) return;
-
-    // No orderBy — avoids needing a composite index on Spark plan
-    // We sort client-side instead
     const q = query(
       collection(db, 'interests'),
       where('sellerId', '==', userId)
@@ -22,7 +19,6 @@ export function useRequests(userId) {
       const data = snap.docs
         .map(d => ({ id: d.id, ...d.data() }))
         .sort((a, b) => {
-          // Sort pending first, then by createdAt desc
           if (a.status === 'pending' && b.status !== 'pending') return -1;
           if (b.status === 'pending' && a.status !== 'pending') return 1;
           const aTime = a.createdAt?.toMillis?.() || 0;

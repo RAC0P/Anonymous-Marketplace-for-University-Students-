@@ -12,7 +12,6 @@ import { db } from '../../../lib/firebase';
 import AuthGuard from '../../../components/auth/AuthGuard';
 import { useAuth } from '../../../hooks/useAuth';
 
-/* ── Date grouping ───────────────────────────────────────────────────────────── */
 function groupByDate(messages) {
   const groups = [];
   let current  = null;
@@ -37,7 +36,6 @@ function formatMsgTime(ts) {
   return d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
 }
 
-/* ── Loading dots ────────────────────────────────────────────────────────────── */
 function LoadingDots() {
   return (
     <div className="loading-screen" aria-label="Loading">
@@ -49,8 +47,6 @@ function LoadingDots() {
     </div>
   );
 }
-
-/* ── Send icon ───────────────────────────────────────────────────────────────── */
 function SendIcon({ color = 'white' }) {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
@@ -62,8 +58,6 @@ function SendIcon({ color = 'white' }) {
     </svg>
   );
 }
-
-/* ── Page ────────────────────────────────────────────────────────────────────── */
 export default function ChatRoomPage() {
   const { user }   = useAuth();
   const params     = useParams();
@@ -77,8 +71,6 @@ export default function ChatRoomPage() {
 
   const bottomRef  = useRef(null);
   const inputRef   = useRef(null);
-
-  /* Fetch chat metadata */
   useEffect(() => {
     if (!chatId) return;
     getDoc(doc(db, 'chats', chatId)).then(snap => {
@@ -86,8 +78,6 @@ export default function ChatRoomPage() {
       setLoading(false);
     });
   }, [chatId]);
-
-  /* Real-time messages */
   useEffect(() => {
     if (!chatId) return;
     const q = query(
@@ -98,13 +88,10 @@ export default function ChatRoomPage() {
       setMessages(snap.docs.map(d => ({ id: d.id, ...d.data() })))
     );
   }, [chatId]);
-
-  /* Auto-scroll */
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  /* Send */
   const sendMessage = useCallback(async (e) => {
     e?.preventDefault();
     const msg = text.trim();
@@ -123,7 +110,7 @@ export default function ChatRoomPage() {
       });
     } catch (err) {
       console.error(err);
-      setText(msg); // restore on failure
+      setText(msg); 
     } finally {
       setSending(false);
       inputRef.current?.focus();
@@ -134,13 +121,12 @@ export default function ChatRoomPage() {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
   }
 
-  /* Identity helpers */
-  const isBuyer     = chat?.participants?.[0] === user?.uid;
+
+   const isBuyer     = chat?.participants?.[0] === user?.uid;
   const myAvatar    = isBuyer ? chat?.buyerAvatar  : chat?.sellerAvatar;
   const otherAvatar = isBuyer ? chat?.sellerAvatar : chat?.buyerAvatar;
   const otherName   = isBuyer ? chat?.sellerName   : chat?.buyerName;
 
-  /* ── Render guards ── */
   if (loading) return <AuthGuard><LoadingDots /></AuthGuard>;
 
   if (!chat) return (

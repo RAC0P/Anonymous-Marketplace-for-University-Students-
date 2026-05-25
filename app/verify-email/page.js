@@ -12,8 +12,6 @@ export default function VerifyEmailPage() {
   const [discarding, setDiscarding] = useState(false);
   const [error, setError] = useState('');
 
-  // Password prompt state — shown only when sessionStorage entry is gone
-  // (e.g. user refreshed the page or came back later)
   const [needsPassword, setNeedsPassword] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState('');
 
@@ -38,12 +36,9 @@ export default function VerifyEmailPage() {
 
   const handleUseNewEmail = async () => {
     setError('');
-
-    // Grab password from sessionStorage (set at signup) or from the inline prompt
     let password = sessionStorage.getItem('_cx_tmp_pw') || confirmPassword;
 
     if (!password) {
-      // No stored password and user hasn't typed one yet — show the prompt
       setNeedsPassword(true);
       return;
     }
@@ -51,7 +46,7 @@ export default function VerifyEmailPage() {
     setDiscarding(true);
     try {
       await deleteUnverifiedAccount(password);
-      sessionStorage.removeItem('_cx_tmp_pw'); // Clean up immediately
+      sessionStorage.removeItem('_cx_tmp_pw'); 
       router.replace('/login');
     } catch (err) {
       sessionStorage.removeItem('_cx_tmp_pw');

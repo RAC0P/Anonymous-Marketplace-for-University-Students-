@@ -8,7 +8,6 @@ import AuthGuard from '../../components/auth/AuthGuard';
 import Navbar from '../../components/ui/Navbar';
 import { useAuth } from '../../hooks/useAuth';
 
-/* ── Time formatter ──────────────────────────────────────────────────────────── */
 function formatTime(date) {
   if (!date) return '';
   const d    = date.toDate ? date.toDate() : date;
@@ -19,7 +18,6 @@ function formatTime(date) {
   return d.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
 }
 
-/* ── Skeleton ────────────────────────────────────────────────────────────────── */
 function ChatSkeleton() {
   return (
     <div
@@ -35,8 +33,6 @@ function ChatSkeleton() {
     </div>
   );
 }
-
-/* ── Page ────────────────────────────────────────────────────────────────────── */
 export default function ChatListPage() {
   const { user }            = useAuth();
   const [chats, setChats]   = useState([]);

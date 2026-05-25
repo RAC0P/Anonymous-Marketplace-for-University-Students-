@@ -9,14 +9,12 @@ import Navbar from '../../components/ui/Navbar';
 import { useAuth } from '../../hooks/useAuth';
 import { useRequests } from '../../hooks/useRequests';
 
-/* ── Status config ───────────────────────────────────────────────────────────── */
 const STATUS = {
   pending:  { label: 'Pending',  dotCls: 'status-dot-amber',  cardCls: 'pending',  badgeCls: 'badge-amber'  },
   accepted: { label: 'Accepted', dotCls: 'status-dot-green',  cardCls: 'accepted', badgeCls: 'badge-green'  },
   rejected: { label: 'Rejected', dotCls: 'status-dot-red',    cardCls: 'rejected', badgeCls: 'badge-red'    },
 };
 
-/* ── Stat card ───────────────────────────────────────────────────────────────── */
 function StatCard({ label, value, accent, loading }) {
   return (
     <div className="stat-card" role="status" aria-label={`${label}: ${value}`}>
@@ -36,7 +34,6 @@ function StatCard({ label, value, accent, loading }) {
   );
 }
 
-/* ── Request card ────────────────────────────────────────────────────────────── */
 function RequestCard({ request, processing, onAccept, onReject }) {
   const s           = STATUS[request.status] || STATUS.pending;
   const isProcessing = processing === request.id;
@@ -128,7 +125,6 @@ function RequestCard({ request, processing, onAccept, onReject }) {
   );
 }
 
-/* ── Skeleton ────────────────────────────────────────────────────────────────── */
 function RequestSkeleton() {
   return (
     <div
@@ -146,7 +142,6 @@ function RequestSkeleton() {
   );
 }
 
-/* ── Page ────────────────────────────────────────────────────────────────────── */
 export default function DashboardPage() {
   const { user }                = useAuth();
   const { requests, loading }   = useRequests(user?.uid);

@@ -56,10 +56,8 @@ export default function NewListingPage() {
     setPreviews((prev) => [...prev, ...newPreviews]);
   }
 
-  // Remove a selected image before submission
   function removeImage(index) {
     setImages((prev) => prev.filter((_, i) => i !== index));
-    // Revoke the ObjectURL memory allocation to prevent leaks
     URL.revokeObjectURL(previews[index]);
     setPreviews((prev) => prev.filter((_, i) => i !== index));
   }
@@ -79,7 +77,6 @@ export default function NewListingPage() {
 
     setLoading(true);
     try {
-      // Pass fields structure alongside our raw array of file attachments
       await createListing(
         {
           sellerId: user.uid,
@@ -92,8 +89,6 @@ export default function NewListingPage() {
         },
         images
       );
-      
-      // Clean up allocated object previews out of browser runtime environment
       previews.forEach((url) => URL.revokeObjectURL(url));
       
       router.push('/marketplace');
