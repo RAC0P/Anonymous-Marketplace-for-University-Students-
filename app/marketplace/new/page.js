@@ -2,6 +2,9 @@
 import './NewListing.css';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '../../../hooks/useAuth';
+import { createListing } from '../../../lib/listings';
 
 // Config constants
 const CAT_EMOJIS = { books: '📚', notes: '📝', electronics: '💻', lab: '🧪', hostel: '🛋️', other: '✨' };
@@ -14,51 +17,114 @@ const COND_INFO = {
 };
 
 export default function NewListing() {
+  const { user } = useAuth();
+  const router = useRouter();
+
   // State management
   const [title, setTitle] = useState('');
   const [desc, setDesc] = useState('');
   const [price, setPrice] = useState('');
   const [selCat, setSelCat] = useState('books');
   const [selCond, setSelCond] = useState('good');
-  const [imgCount, setImgCount] = useState(0);
+  
+  // Restored actual file and preview state layers
+  const [images, setImages] = useState([]);
+  const [previews, setPreviews] = useState([]);
+  
   const [errorMsg, setErrorMsg] = useState('');
   const [submitState, setSubmitState] = useState('idle'); // 'idle' | 'loading' | 'success'
 
   const errorBarRef = useRef(null);
 
-  // Dynamic Multi-step Progress Calculation
-  const steps = [!!title.trim(), !!desc.trim(), price !== '' && Number(price) >= 0, imgCount > 0];
+  // Dynamic Multi-step Progress Calculation (now checking actual images length)
+  const steps = [!!title.trim(), !!desc.trim(), price !== '' && Number(price) >= 0, images.length > 0];
 
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files || []);
-    setImgCount((prev) => Math.min(files.length + prev, 6));
+    
+    // Enforce max 6 images threshold safely
+    const availableSlots = 6 - images.length;
+    const filesToProcess = files.slice(0, availableSlots);
+
+    if (filesToProcess.length === 0) return;
+
+    // Generate object URLs for layout image tags
+    const newPreviews = filesToProcess.map((file) => URL.createObjectURL(file));
+
+    setImages((prev) => [...prev, ...filesToProcess]);
+    setPreviews((prev) => [...prev, ...newPreviews]);
   };
 
   const removeImg = (index, e) => {
     e.stopPropagation();
-    setImgCount((prev) => Math.max(0, prev - 1));
+    
+    // Revoke URL to prevent browser context memory leaks
+    URL.revokeObjectURL(previews[index]);
+
+    setImages((prev) => prev.filter((_, i) => i !== index));
+    setPreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setErrorMsg('');
 
-    if (!title.trim()) {
-      setErrorMsg('Please add a title for your listing.');
-      return;
-    }
-    if (!desc.trim()) {
-      setErrorMsg('Please write a description.');
-      return;
-    }
-    if (price === '' || Number(price) < 0) {
-      setErrorMsg('Please enter a valid price (0 or more).');
+    if (!user) {
+      setErrorMsg('You must be signed in to create a listing.');
       return;
     }
 
-    setSubmitState('loading');
-    setTimeout(() => {
+    if (!title.trim()) {
+      setErrorMsg('Please add a title.');
+      return;
+    }
+
+    if (!desc.trim()) {
+      setErrorMsg('Please add a description.');
+      return;
+    }
+
+    if (price === '' || Number(price) < 0) {
+      setErrorMsg('Please enter a valid price.');
+      return;
+    }
+
+    try {
+      setSubmitState('loading');
+
+      // Executing the real backend creation payload
+      await createListing(
+        {
+          sellerId: user.uid,
+          sellerEmail: user.email,
+          title: title.trim(),
+          description: desc.trim(),
+          price: Number(price),
+          category: selCat,
+          condition: selCond,
+        },
+        images // Passing real binary data files to Firebase pipeline
+      );
+
       setSubmitState('success');
-    }, 1800);
+
+      // Complete reset configuration
+      setTitle('');
+      setDesc('');
+      setPrice('');
+      setImages([]);
+      setPreviews([]);
+      setSelCat('books');
+      setSelCond('good');
+
+      setTimeout(() => {
+        router.push('/marketplace');
+      }, 1200);
+
+    } catch (err) {
+      console.error(err);
+      setSubmitState('idle');
+      setErrorMsg(err.message || 'Failed to publish listing.');
+    }
   };
 
   // Scroll error bar into view if active
@@ -68,6 +134,13 @@ export default function NewListing() {
     }
   }, [errorMsg]);
 
+  // Cleanup object URLs when component unmounts to prevent memory degradation
+  useEffect(() => {
+    return () => {
+      previews.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [previews]);
+
   return (
     <div className="page">
       {/* FontAwesome integration for Next.js */}
@@ -75,7 +148,7 @@ export default function NewListing() {
 
       {/* ═══ LEFT PANEL ═══ */}
       <div className="left">
-        <button className="back-btn">
+        <button type="button" className="back-btn" onClick={() => router.push('/marketplace')}>
           <i className="fa-solid fa-arrow-left"></i> Back to Marketplace
         </button>
 
@@ -107,8 +180,7 @@ export default function NewListing() {
             maxLength={80}
             placeholder="e.g. Engineering Mathematics Vol. II"
             value={title}
-            onChange={(e) => setTitle}
-            onInput={(e) => setTitle(e.target.value)}
+            onChange={(e) => setTitle(e.target.value)}
           />
         </div>
 
@@ -126,7 +198,7 @@ export default function NewListing() {
             maxLength={500}
             placeholder="Describe the item, included accessories, any defects…"
             value={desc}
-            onInput={(e) => setDesc(e.target.value)}
+            onChange={(e) => setDesc(e.target.value)}
           ></textarea>
         </div>
 
@@ -137,6 +209,7 @@ export default function NewListing() {
         <div className="cat-grid">
           {Object.keys(CAT_LABELS).map((cat) => (
             <button
+              type="button"
               key={cat}
               className={`cat-btn ${selCat === cat ? 'active' : ''}`}
               onClick={() => setSelCat(cat)}
@@ -156,6 +229,7 @@ export default function NewListing() {
             const isActive = selCond === key;
             return (
               <button
+                type="button"
                 key={key}
                 className={`cond-btn ${isActive ? 'active' : ''}`}
                 onClick={() => setSelCond(key)}
@@ -177,15 +251,22 @@ export default function NewListing() {
         {/* Photos Upload Grid */}
         <p className="section-label">Photos</p>
         <div className="img-grid">
-          <label className="img-slot" style={{ cursor: 'pointer' }}>
+          <label className="img-slot" style={{ cursor: images.length >= 6 ? 'not-allowed' : 'pointer', opacity: images.length >= 6 ? 0.5 : 1 }}>
             <i className="fa-regular fa-image"></i>
             <span className="upload-label">Upload</span>
-            <input type="file" multiple accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
+            <input 
+              type="file" 
+              multiple 
+              accept="image/*" 
+              onChange={handleImageUpload} 
+              style={{ display: 'none' }} 
+              disabled={images.length >= 6}
+            />
           </label>
 
-          {/* Render filled slots */}
-          {Array.from({ length: Math.min(imgCount, 5) }).map((_, i) => (
-            <div key={`filled-${i}`} className="img-slot filled">
+          {/* Render real filled slots with actual preview object blobs */}
+          {previews.slice(0, 5).map((src, i) => (
+            <div key={`filled-${i}`} className="img-slot filled" style={{ backgroundImage: `url(${src})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
               <span className="img-num">{i + 1}</span>
               <div className="img-badge" onClick={(e) => removeImg(i, e)}>
                 <i className="fa-solid fa-xmark"></i>
@@ -193,9 +274,9 @@ export default function NewListing() {
             </div>
           ))}
 
-          {/* Render empty placeholders */}
-          {Array.from({ length: Math.max(0, 3 - Math.min(imgCount, 5)) }).map((_, i) => {
-            const visualIndex = Math.min(imgCount, 5) + i + 1;
+          {/* Render empty placeholders dynamically mapped to image arrays */}
+          {Array.from({ length: Math.max(0, 3 - Math.min(images.length, 5)) }).map((_, i) => {
+            const visualIndex = Math.min(images.length, 5) + i + 1;
             return (
               <div
                 key={`empty-${i}`}
@@ -225,7 +306,7 @@ export default function NewListing() {
             min="0"
             placeholder="0"
             value={price}
-            onInput={(e) => setPrice(e.target.value)}
+            onChange={(e) => setPrice(e.target.value)}
           />
         </div>
         <p className="img-hint" style={{ marginTop: '8px' }}>Set to 0 for free giveaway</p>
@@ -240,6 +321,7 @@ export default function NewListing() {
 
         {/* Submit Actions */}
         <button
+          type="button"
           className={`submit-btn ${submitState === 'success' ? 'success' : ''}`}
           disabled={submitState !== 'idle'}
           onClick={handleSubmit}
@@ -280,11 +362,20 @@ export default function NewListing() {
         {/* Live Preview Card */}
         <div className="card-preview">
           <div className="card-img-row">
-            <div className="card-img-block b1">
-              {imgCount > 0 ? '🖼️' : CAT_EMOJIS[selCat] || '📦'}
+            {/* Slot 1 Cover Image Preview logic */}
+            <div className="card-img-block b1" style={previews[0] ? { backgroundImage: `url(${previews[0]})`, backgroundSize: 'cover', backgroundPosition: 'center', fontSize: 0 } : {}}>
+              {!previews[0] && (CAT_EMOJIS[selCat] || '📦')}
             </div>
-            <div className="card-img-block b2">{imgCount > 1 ? '🖼️' : '📦'}</div>
-            <div className="card-img-block b3">{imgCount > 2 ? '🖼️' : '✨'}</div>
+            
+            {/* Slot 2 Preview */}
+            <div className="card-img-block b2" style={previews[1] ? { backgroundImage: `url(${previews[1]})`, backgroundSize: 'cover', backgroundPosition: 'center', fontSize: 0 } : {}}>
+              {!previews[1] && '📦'}
+            </div>
+            
+            {/* Slot 3 Preview */}
+            <div className="card-img-block b3" style={previews[2] ? { backgroundImage: `url(${previews[2]})`, backgroundSize: 'cover', backgroundPosition: 'center', fontSize: 0 } : {}}>
+              {!previews[2] && '✨'}
+            </div>
           </div>
 
           <div className="card-meta">
@@ -313,7 +404,7 @@ export default function NewListing() {
             ) : (
               <div className="card-price-empty">৳ —</div>
             )}
-            <button className="card-action-btn">Contact</button>
+            <button type="button" className="card-action-btn">Contact</button>
           </div>
         </div>
 
