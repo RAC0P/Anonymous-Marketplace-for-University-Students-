@@ -1,182 +1,165 @@
 <div align="center">
 
-# 🎓 Anonymous Marketplace for University Students
+# 🛒 CampusXchange
 
-### A privacy-focused campus marketplace built for students
+### Anonymous Peer-to-Peer Marketplace for University Students
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Platform-Web-blue?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/Status-Active-success?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/Privacy-Anonymous-important?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/Open%20Source-RAC0P-red?style=for-the-badge" />
-</p>
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-campusxchange--dusky.vercel.app-6c63ff?style=for-the-badge&logo=vercel)](https://campusxchange-dusky.vercel.app/welcome)
+[![Next.js](https://img.shields.io/badge/Next.js-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+[![Firebase](https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)](https://firebase.google.com/)
+[![Vercel](https://img.shields.io/badge/Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/)
+
+
+> **Trade stuff. Stay hidden. Save money.**  
+> Buy, sell, and exchange within your campus — completely anonymous.
 
 </div>
 
 ---
 
-# 📌 Overview
+## 📖 Overview
 
-In every university campus, thousands of students coexist — yet it is practically impossible for everyone to know everyone. Students constantly buy and sell products among themselves: calculators, books, gadgets, bicycles, room accessories, lab equipment, clothing, gaming devices, and countless other items.  
+Every university campus has an informal economy — textbooks changing hands between semesters, hostel furniture resold at the end of the year, lab coats being passed down. But this economy typically lives in awkward WhatsApp groups and public notice boards where your real identity is always attached to your transaction.
 
-The problem is that there is rarely a dedicated, trusted, and privacy-focused platform specifically designed for internal campus trading.
-
-Sometimes a student wants to:
-- Ask about a product anonymously
-- Bargain privately
-- Explore listings without exposing identity
-- Avoid sharing personal information publicly
-- Trade only within a student community
-
-This project aims to solve that problem.
+**CampusXchange** solves this. It's a fully anonymous peer-to-peer marketplace built exclusively for university students, where you can buy, sell, and negotiate without ever exposing your real name, photo, or contact details to another user.
 
 ---
 
-# 💡 What This Platform Does
+## ✨ Features
 
-**Anonymous Marketplace for University Students** is a secure marketplace platform where students can:
-
-- Post product listings
-- Buy and sell items
-- Explore campus listings
-- Chat privately with sellers or buyers
-- Negotiate anonymously
-- Exchange information only when both parties are comfortable
-
-The core idea is simple:
-
-> Until users willingly share their personal information in chat, their identity remains hidden.
-
-This creates a safer and more comfortable environment for campus trading while still maintaining accountability through administrator oversight.
+| Feature | Description |
+|---|---|
+| 🎭 **Anonymous Identity** | Every user gets a randomly generated alias and avatar that resets each session |
+| 💬 **In-App Chat** | Negotiate price and arrange handoff entirely within the platform — no phone numbers exchanged |
+| 📦 **Category Listings** | Textbooks, notes, electronics, lab gear, hostel items and more |
+| ⚡ **60-Second Listing** | Photo, title, price — your listing is live before your next class |
+| 🛡️ **Admin Moderation** | All listings are reviewed before publication |
+| 🔒 **Zero Identity Exposure** | Real name, photo, and email are never surfaced to other users |
 
 ---
 
-# 🔒 Privacy & Security
+## 🏗️ Tech Stack
 
-The platform is designed with a balance between:
-- **User anonymity**
-- **Campus trust**
-- **Administrative accountability**
+```
+Frontend    →  Next.js (React)
+Backend     →  Firebase (Firestore + Realtime Database)
+Auth        →  Firebase Authentication
+Hosting     →  Vercel (Edge Network)
+```
 
-### 🛡 Authentication System
-
-The long-term vision of this platform is:
-
-> Only students with verified university email addresses will be able to create accounts.
-
-This ensures that the marketplace remains exclusive to legitimate students within a university ecosystem.
-
-Currently, since the platform is **not yet officially affiliated with any university**, registration is temporarily available using regular Gmail accounts.
-
-However, in future institutional deployments:
-- Only university-issued emails will be accepted
-- The marketplace can become campus-specific
-- Communities can remain internally trusted and moderated
+- **Next.js on Vercel** — serverless-first, auto-scaling, edge-deployed. No idle compute, no config changes needed when traffic spikes at the start of semester.
+- **Firebase Auth** — handles all authentication. No passwords are ever stored by the application itself. Short-lived JWT tokens, Firebase-enforced rate limiting.
+- **Firestore** — structured listing data with indexed filtering by category, price, and condition.
+- **Firebase Realtime Database** — powers in-app chat with sub-second message delivery.
 
 ---
 
-# ⚠ Moderation Policy
+## 🔐 Security Assessment
 
-Although users remain anonymous publicly, administrators maintain visibility of registered email identities internally for security and moderation purposes.
+Following initial deployment, a structured penetration test was conducted across the most common web application attack surfaces. Results are documented transparently below.
 
-This is done to ensure:
-- Protection against scams
-- Prevention of illegal activity
-- Prevention of harassment or abusive behavior
-- Safer campus interaction
+### Test Results
 
-Any:
-- obscene listings
-- illegal products
-- fraudulent activity
-- harassment
-- misuse of anonymity
+| Vector | Tool / Method | Result |
+|---|---|---|
+| Directory & endpoint enumeration | Wordlist scan | ✅ Admin routes return 403 — no file/directory exposure |
+| Traffic interception | Burp Suite | ✅ HTTPS-only — no sensitive data in headers or params |
+| Credential brute-force | THC-Hydra | ✅ Non-viable — Firebase Auth has no compatible attack surface |
+| Cross-site scripting (search) | Manual payload injection | ✅ React output escaping blocks execution |
+| Cross-site scripting (login) | Manual payload injection | ✅ Firebase rejects malformed input as `auth/invalid-email` |
+| Crawler enumeration | robots.txt probe | ✅ Returns 404 — no route hints exposed |
 
-will result in:
+### Known Limitations & Roadmap
 
-- Permanent account bans
-- Administrative reporting
-- Possible further academic or disciplinary action if affiliated with a university
+The following hardening measures are actively in progress:
 
----
+- [ ] Content Security Policy (CSP) headers
+- [ ] `HttpOnly` and `SameSite` cookie attribute configuration
+- [ ] Rate limiting on listing creation endpoints
+- [ ] Formal third-party penetration test prior to wider release
 
-# ✨ Features
-
-## 🛒 Marketplace Listings
-Students can upload products with:
-- Images
-- Descriptions
-- Pricing
-- Product categories
+Security is treated as a continuous process, not a deployment milestone.
 
 ---
 
-## 💬 Anonymous Chat System
-Users can privately communicate with buyers/sellers without immediately revealing identity.
+## 🚀 Getting Started
 
-This allows:
-- Safe bargaining
-- Asking questions comfortably
-- Privacy-first interactions
+### Prerequisites
 
----
+- Node.js 18+
+- A Firebase project with Firestore, Realtime Database, and Authentication enabled
 
-## 🔐 Authentication
-- Secure account creation
-- Email-based login system
-- Future university email verification support
+### Installation
 
----
+```bash
+# Clone the repository
+git clone https://github.com/RAC0P/Anonymous-Marketplace-for-University-Students-.git
+cd Anonymous-Marketplace-for-University-Students-
 
-## 📱 Responsive Interface
-Designed for accessibility across:
-- Desktop
-- Tablet
-- Mobile devices
+# Install dependencies
+npm install
 
----
+# Set up environment variables
+cp .env.example .env.local
+# Fill in your Firebase config values in .env.local
 
-# 🚀 Vision
+# Run the development server
+npm run dev
+```
 
-This project is more than just a buying/selling platform.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-It explores the idea of:
-- Digital trust within universities
-- Privacy-preserving student interaction
-- Secure anonymous communication
-- Campus-focused online ecosystems
+### Environment Variables
 
-The goal is to eventually evolve into a fully university-integrated marketplace system where every campus can maintain its own trusted student economy.
-
----
-
-# 🧠 Tech Stack
-
-- Frontend: React / Next.js
-- Backend: Firebase
-- Authentication: Firebase Auth
-- Database: Firestore
-- Storage: Cloud Storage / ImgBB
-- Deployment: Vercel
+```env
+NEXT_PUBLIC_FIREBASE_API_KEY=
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
+NEXT_PUBLIC_FIREBASE_APP_ID=
+NEXT_PUBLIC_FIREBASE_DATABASE_URL=
+```
 
 ---
 
+## 📁 Project Structure
 
-# 🤝 Contributing
-
-Contributions, ideas, feature suggestions, and improvements are welcome.
-
-This project is being developed under:
-
-## 🚩 RAC0P
-An open-source initiative focused on building projects that strengthen learning through practical development.
+```
+/
+├── app/                  # Next.js app directory
+│   ├── welcome/          # Landing page
+│   ├── marketplace/      # Listings browse page
+│   ├── login/            # Authentication
+│   ├── dashboard/        # User dashboard
+│   └── chat/             # In-app messaging
+├── components/           # Reusable UI components
+├── lib/                  # Firebase config and utilities
+└── public/               # Static assets
+```
 
 ---
+
+## 🤝 Contributing
+
+Contributions are welcome — whether that's a bug fix, a new feature, a security finding, or a documentation improvement.
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/your-feature`)
+3. Commit your changes (`git commit -m 'Add your feature'`)
+4. Push to the branch (`git push origin feature/your-feature`)
+5. Open a Pull Request
+
+### Responsible Disclosure
+
+If you discover a security vulnerability, please do not open a public issue. Contact the maintainers directly so it can be addressed before disclosure.
+
+
 
 <div align="center">
 
-### Built for students.  
-### Designed for privacy.  
-### Focused on trust.
+Built by university students, for university students.
+
+[Live Site](https://campusxchange-dusky.vercel.app/welcome) · [Report a Bug](https://github.com/RAC0P/Anonymous-Marketplace-for-University-Students-/issues) · [Request a Feature](https://github.com/RAC0P/Anonymous-Marketplace-for-University-Students-/issues)
 
 </div>
